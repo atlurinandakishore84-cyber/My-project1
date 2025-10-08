@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aditya College Attendance Portal</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 0; background: #eef2f7; color: #333;
+  }
+  header {
+    background: #004aad;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+  }
+  main {
+    max-width: 900px;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  h2 {
+    margin-top: 0;
+    color: #004aad;
+  }
+  label {
+    display: block;
+    margin-top: 10px;
+    font-weight: 600;
+  }
+  input[type=text], input[type=date], select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  button {
+    margin-top: 15px;
+    padding: 10px 18px;
+    background: #004aad;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #00337a;
+  }
+  nav {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  nav button {
+    background: #004aad;
+    padding: 10px 15px;
+    border-radius: 6px;
+  }
+  nav button.active {
+    background: #002c5a;
+  }
+  .hidden {
+    display: none;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+  th, td {
+    border: 1px solid #aaa;
+    padding: 8px;
+    text-align: center;
+  }
+  th {
+    background: #004aad;
+    color: white;
+  }
+  .present {
+    background-color: #27ae60;
+    color: white;
+    font-weight: bold;
+  }
+  .absent {
+    background-color: #c0392b;
+    color: white;
+    font-weight: bold;
+  }
+  .logout-btn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: #c0392b;
+  }
+  .logout-btn:hover {
+    background: #a02b22;
+  }
+  .alert {
+    background: #ffdddd;
+    padding: 10px;
+    margin: 15px 0;
+    border-left: 6px solid #f44336;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Aditya College of Engineering - Attendance Portal</h1>
+</header>
+
+<main>
+  <!-- Login Page -->
+  <section id="loginSection">
+    <h2>Faculty Login</h2>
+    <label for="facultyUsername">Username</label>
+    <input type="text" id="facultyUsername" placeholder="Enter username" />
+    <label for="facultyPassword">Password</label>
+    <input type="password" id="facultyPassword" placeholder="Enter password" />
+    <button id="loginBtn">Login</button>
+    <p style="margin-top:10px; font-size:0.9rem;">(For demo: Use username: <code>faculty1</code> and password: <code>password</code>)</p>
+    <div id="loginError" class="alert hidden"></div>
+  </section>
+
+  <!-- Portal after login -->
+  <section id="portalSection" class="hidden">
+
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+
+    <nav>
+      <button id="navAttendance" class="active">Mark Attendance</button>
+      <button id="navManageStudents">Manage Students</button>
+      <button id="navViewReport">View Attendance Report</button>
+    </nav>
+
+    <!-- Attendance Section -->
+    <div id="attendanceSection">
+      <h2>Mark Attendance</h2>
+
+      <label for="selectCourse">Select Course</label>
+      <select id="selectCourse"></select>
+
+      <label for="selectDate">Select Date</label>
+      <input type="date" id="selectDate" />
+
+      <div id="attendanceTableContainer" style="margin-top:20px; max-height: 350px; overflow-y: auto;">
+        <table id="attendanceTable">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Present</th>
+              <th>Absent</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <button id="saveAttendanceBtn">Save Attendance</button>
+    </div>
+
+    <!-- Manage Students Section -->
+    <div id="manageStudentsSection" class="hidden">
+      <h2>Manage Students</h2>
+
+      <label for="studentNameInput">Student Name</label>
+      <input type="text" id="studentNameInput" placeholder="Enter student full name" />
+
+      <label for="studentCourseSelect">Assign Course</label>
+      <select id="studentCourseSelect"></select>
+
+      <button id="addStudentBtn">Add Student</button>
+
+      <h3 style="margin-top:30px;">Students List</h3>
+      <table id="studentsListTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Course</th>
+            <th>Remove</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Attendance Report Section -->
+    <div id="viewReportSection" class="hidden">
+      <h2>Attendance Report</h2>
+
+      <label for="reportCourseSelect">Select Course</label>
+      <select id="reportCourseSelect"></select>
+
+      <button id="generateReportBtn">Generate Report</button>
+
+      <div id="reportResult" style="margin-top:20px; max-height: 400px; overflow-y: auto;"></div>
+    </div>
+
+  </section>
+</main>
+
+<script>
+  // Simulated faculty credentials
+  const facultyUsers = [
+    { username: 'faculty1', password: 'password', name: 'Prof. Rao' }
+  ];
+
+  // Sample courses
+  const courses = [
+    "Computer Science",
+    "Electronics",
+    "Mechanical",
+    "Civil",
+    "Electrical"
+  ];
+
+  // Data keys for localStorage
+  const LS_STUDENTS = 'ace_students';
+  const LS_ATTENDANCE = 'ace_attendance';
+
+  // Elements
+  const loginSection = document.getElementById('loginSection');
+  const portalSection = document.getElementById('portalSection');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const facultyUsernameInput = document.getElementById('facultyUsername');
+  const facultyPasswordInput = document.getElementById('facultyPassword');
+  const loginErrorDiv = document.getElementById('loginError');
+
+  // Nav buttons
+  const navAttendance = document.getElementById('navAttendance');
+  const navManageStudents = document.getElementById('navManageStudents');
+  const navViewReport = document.getElementById('navViewReport');
+
+  // Sections inside portal
+  const attendanceSection = document.getElementById('attendanceSection');
+  const manageStudentsSection = document.getElementById('manageStudentsSection');
+  const viewReportSection = document.getElementById('viewReportSection');
+
+  // Attendance inputs
+  const selectCourse = document.getElementById('selectCourse');
+  const selectDate = document.getElementById('selectDate');
+  const attendanceTableBody = document.querySelector('#attendanceTable tbody');
+  const saveAttendanceBtn = document.getElementById('saveAttendanceBtn');
+
+  // Manage students inputs
+  const studentNameInput = document.getElementById('studentNameInput');
+  const studentCourseSelect = document.getElementById('studentCourseSelect');
+  const addStudentBtn = document.getElementById('addStudentBtn');
+  const studentsListTableBody = document.querySelector('#studentsListTable tbody');
+
+  // Report inputs
+  const reportCourseSelect = document.getElementById('reportCourseSelect');
+  const generateReportBtn = document.getElementById('generateReportBtn');
+  const reportResultDiv = document.getElementById('reportResult');
+
+  // Logged in user
+  let loggedInFaculty = null;
+
+  // Data stores
+  let students = JSON.parse(localStorage.getItem(LS_STUDENTS)) || [];
+  // attendance data format:
+  // { "courseName": { "YYYY-MM-DD": { "studentName": "Present" | "Absent" } } }
+  let attendanceData = JSON.parse(localStorage.getItem(LS_ATTENDANCE)) || {};
+
+  // ----- Login Logic -----
+  loginBtn.onclick = () => {
+    const username = facultyUsernameInput.value.trim();
+    const password = facultyPasswordInput.value;
+
+    const faculty = facultyUsers.find(u => u.username === username && u.password === password);
+    if (!faculty) {
+      loginErrorDiv.textContent = 'Invalid username or password';
+      loginErrorDiv.classList.remove('hidden');
+      return;
+    }
+    loginErrorDiv.classList.add('hidden');
+    loggedInFaculty = faculty;
+    loginSection.classList.add('hidden');
+    portalSection.classList.remove('hidden');
+
+    initPortal();
+  };
+
+  logoutBtn.onclick = () => {
+    loggedInFaculty = null;
+    loginSection.classList.remove('hidden');
+    portalSection.classList.add('hidden');
+    facultyUsernameInput.value = '';
+    facultyPasswordInput.value = '';
+    clearAllInputs();
+    clearTables();
+  };
+
+  // Clear inputs and tables on logout
+  function clearAllInputs() {
+    studentNameInput.value = '';
+    attendanceTableBody.innerHTML = '';
+    studentsListTableBody.innerHTML = '';
+    reportResultDiv.innerHTML = '';
+  }
+  function clearTables() {
+    attendanceTableBody.innerHTML = '';
+    studentsListTableBody.innerHTML = '';
+  }
+
+  // Initialize portal on login
+  function initPortal() {
+    populateCourseSelects();
+    showSection('attendance');
+    renderStudentsTable();
+    attendanceTableBody.innerHTML = '';
+    reportResultDiv.innerHTML = '';
+  }
+
+  // Populate course dropdowns
+  function populateCourseSelects() {
+    // Clear all
+    selectCourse.innerHTML = '<option value="">-- Select Course --</option>';
+    studentCourseSelect.innerHTML = '<option value="">-- Select Course --</option>';
+    reportCourseSelect.innerHTML = '<option value="">-- Select Course --</option>';
+
+    courses.forEach(c => {
+      const option1 = document.createElement('option');
+      option1.value = c;
+      option1.textContent = c;
+      selectCourse.appendChild(option1);
+
+      const option2 = document.createElement('option');
+      option2.value = c;
+      option2.textContent = c;
+      studentCourseSelect.appendChild(option2);
+
+      const option3 = document.createElement('option');
+      option3.value = c;
+      option3.textContent = c;
+      reportCourseSelect.appendChild(option3);
+    });
+  }
+
+  // Navigation buttons
+  navAttendance.onclick = () => showSection('attendance');
+  navManageStudents.onclick = () => showSection('manageStudents');
+  navViewReport.onclick = () => showSection('viewReport');
+
+  function showSection(section) {
+    attendanceSection.classList.add('hidden');
+    manageStudentsSection.classList.add('hidden');
+    viewReportSection.classList.add('hidden');
+
+    navAttendance.classList.remove('active');
+    navManageStudents.classList.remove('active');
+    navViewReport.classList.remove('active');
+
+    if (section === 'attendance') {
+      attendanceSection.classList.remove('hidden');
+      navAttendance.classList.add('active');
+    } else if (section === 'manageStudents') {
+      manageStudentsSection.classList.remove('hidden');
+      navManageStudents.classList.add('active');
+      renderStudentsTable();
+    } else if (section === 'viewReport') {
+      viewReportSection.classList.remove('hidden');
+      navViewReport.classList.add('active');
+      reportResultDiv.innerHTML = '';
+    }
+  }
+
+  // --- Manage Students ---
+
+  addStudentBtn.onclick = () => {
+    const name = studentNameInput.value.trim();
+    const course = studentCourseSelect.value;
+
+    if (!name) {
+      alert('Please enter student name.');
+      return;
+    }
+    if (!course) {
+      alert('Please select a course.');
+      return;
+    }
+
+    // Check if student already exists
+    if (students.find(s => s.name.toLowerCase() === name.toLowerCase())) {
+      alert('Student already exists.');
+      return;
+    }
+
+    students.push({ name, course });
+    localStorage.setItem(LS_STUDENTS, JSON.stringify(students));
+    studentNameInput.value = '';
+    studentCourseSelect.value = '';
+
+    renderStudentsTable();
+    alert('Student added successfully!');
+  };
+
+  function renderStudentsTable() {
+    studentsListTableBody.innerHTML = '';
+    if(students.length === 0) {
+      studentsListTableBody.innerHTML = `<tr><td colspan="3">No students added yet.</td></tr>`;
+      return;
+    }
+    students.forEach((student, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${student.name}</td>
+        <td>${student.course}</td>
+        <td><button data-idx="${idx}" class="removeStudentBtn" style="background:#c0392b; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Remove</button></td>
+      `;
+      studentsListTableBody.appendChild(tr);
+    });
+
+    // Attach remove handlers
+    document.querySelectorAll('.removeStudentBtn').forEach(btn => {
+      btn.onclick = (e) => {
+        const idx = e.target.getAttribute('data-idx');
+        if(confirm(`Remove student "${students[idx].name}"?`)) {
+          students.splice(idx, 1);
+          localStorage.setItem(LS_STUDENTS, JSON.stringify(students));
+          renderStudentsTable();
+        }
+      };
+    });
+  }
+
+  // --- Attendance ---
+
+  selectCourse.onchange = loadAttendanceForSelectedCourseDate;
+  selectDate.onchange = loadAttendanceForSelectedCourseDate;
+
+  function loadAttendanceForSelectedCourseDate() {
+    const course = selectCourse.value;
+    const date = selectDate.value;
+    attendanceTableBody.innerHTML = '';
+
+    if (!course || !date) {
+      attendanceTableBody.innerHTML = `<tr><td colspan="3">Please select course and date.</td></tr>`;
+      return;
+    }
+
+    const courseStudents = students.filter(s => s.course === course);
+    if(courseStudents.length === 0) {
+      attendanceTableBody.innerHTML = `<tr><td colspan="3">No students enrolled in this course.</td></tr>`;
+      return;
+    }
+
+    const dayAttendance = attendanceData[course]?.[date] || {};
+
+    courseStudents.forEach(student => {
+      const presentChecked = dayAttendance[student.name] === 'Present';
+      const absentChecked = dayAttendance[student.name] === 'Absent' || !presentChecked;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align:left;">${student.name}</td>
+        <td><input type="radio" name="attendance-${student.name}" value="Present" ${presentChecked ? 'checked' : ''}></td>
+        <td><input type="radio" name="attendance-${student.name}" value="Absent" ${absentChecked ? 'checked' : ''}></td>
+      `;
+      attendanceTableBody.appendChild(tr);
+    });
+  }
+
+  saveAttendanceBtn.onclick = () => {
+    const course = selectCourse.value;
+    const date = selectDate.value;
+
+    if (!course || !date) {
+      alert('Please select course and date.');
+      return;
+    }
+
+    const courseStudents = students.filter(s => s.course === course);
+    if(courseStudents.length === 0) {
+      alert('No students enrolled in this course.');
+      return;
+    }
+
+    if(!attendanceData[course]) attendanceData[course] = {};
+    if(!attendanceData[course][date]) attendanceData[course][date] = {};
+
+    courseStudents.forEach(student => {
+      const radios = document.getElementsByName(`attendance-${student.name}`);
+      for(const radio of radios) {
+        if(radio.checked) {
+          attendanceData[course][date][student.name] = radio.value;
+        }
+      }
+    });
+
+    localStorage.setItem(LS_ATTENDANCE, JSON.stringify(attendanceData));
+    alert('Attendance saved successfully!');
+  };
+
+  // --- Attendance Report ---
+
+  generateReportBtn.onclick = () => {
+    const course = reportCourseSelect.value;
+    if (!course) {
+      alert('Please select a course.');
+      return;
+    }
+
+    const courseStudents = students.filter(s => s.course === course);
+    if(courseStudents.length === 0) {
+      reportResultDiv.innerHTML = '<p>No students enrolled in this course.</p>';
+      return;
+    }
+
+    const courseAttendance = attendanceData[course] || {};
+    if (Object.keys(courseAttendance).length === 0) {
+      reportResultDiv.innerHTML = '<p>No attendance records found for this course.</p>';
+      return;
+    }
+
+    const dates = Object.keys(courseAttendance).sort();
+
+    let html = `<table><thead><tr><th>Student Name</th>`;
+    dates.forEach(date => {
+      html += `<th>${date}</th>`;
+    });
+    html += `<th>Attendance %</th></tr></thead><tbody>`;
+
+    courseStudents.forEach(student => {
+      let presentCount = 0;
+      let totalClasses = dates.length;
+
+      html += `<tr><td style="text-align:left;">${student.name}</td>`;
+
+      dates.forEach(date => {
+        const status = courseAttendance[date]?.[student.name] || 'Absent';
+        if(status === 'Present') presentCount++;
+        html += `<td class="${status.toLowerCase()}">${status[0]}</td>`;
+      });
+
+      let percentage = totalClasses ? ((presentCount / totalClasses) * 100).toFixed(1) : 0;
+      let percentColor = percentage >= 75 ? 'green' : 'red';
+
+      html += `<td style="font-weight:bold; color:${percentColor}">${percentage}%</td></tr>`;
+    });
+
+    html += '</tbody></table>';
+    reportResultDiv.innerHTML = html;
+  };
+</script>
+
+</body>
+</html>
